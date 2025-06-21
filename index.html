@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Manager</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+    <!-- Notification Box -->
+    <div class="fixed top-4 right-4">
+        <button onclick="toggleNotifications()" class="p-3 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition duration-300">
+            <span id="notification-count" class="absolute -top-2 -right-2 bg-white text-red-500 rounded-full text-xs px-2 py-1">0</span>
+            <i class="fas fa-bell"></i>
+        </button>
+        <div id="notification-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg">
+            <div class="p-4">
+                <h3 class="font-semibold text-gray-900" id="notification-title">Alerts</h3>
+                <ul id="notification-list" class="mt-2 space-y-2 text-sm text-gray-700">
+                    <!-- Low stock and expiring soon medicines will be listed here -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-8 max-w-5xl">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-semibold text-black" id="app-title">Pharmacy Manager</h1>
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleLanguage()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300">
+                    <i class="fas fa-language"></i> <span id="language-text">عربي</span>
+                </button>
+                <button onclick="exportData()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-300">
+                    <i class="fas fa-file-export"></i> <span id="export-text">Export</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Dashboard -->
+        <section class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-6" id="dashboard-title">Dashboard</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Total Medicines Card -->
+                <div class="bg-blue-100 p-6 rounded-lg">
+                    <h3 class="text-lg font-semibold text-blue-800" id="total-medicines-title">Total Medicines</h3>
+                    <p class="text-3xl font-bold text-blue-600" id="total-medicines">0</p>
+                </div>
+                <!-- Low Stock Alerts Card -->
+                <div class="bg-red-100 p-6 rounded-lg">
+                    <h3 class="text-lg font-semibold text-red-800" id="low-stock-alerts-title">Low Stock Alerts</h3>
+                    <p class="text-3xl font-bold text-red-600" id="low-stock-alerts">0</p>
+                </div>
+                <!-- Expiring Soon Alerts Card -->
+                <div class="bg-orange-100 p-6 rounded-lg">
+                    <h3 class="text-lg font-semibold text-orange-800" id="expiring-soon-alerts-title">Expiring Soon</h3>
+                    <p class="text-3xl font-bold text-orange-600" id="expiring-soon-alerts">0</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Add Medicine Form -->
+        <section class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-6" id="add-medicine-title">Add New Medicine</h2>
+            <form id="medicine-form" class="space-y-4">
+                <div class="flex gap-4">
+                    <input type="text" id="name" class="w-full p-3 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Product Name" required>
+                    <input type="number" id="quantity" class="w-full p-3 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Quantity" required>
+                    <input type="number" id="price" class="w-full p-3 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Price" required>
+                    <input type="text" id="barcode" class="w-full p-3 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Barcode" required>
+                    <input type="date" id="expiryDate" class="w-full p-3 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Expiry Date" required>
+                </div>
+                <div class="flex justify-end">
+                    <button onclick="addMedicine()" type="button" class="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300 focus:ring-2 focus:ring-blue-500" aria-label="Add Medicine" id="add-product-button">Add Product</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Search and Sort -->
+        <section class="mb-8 flex justify-between items-center">
+            <div class="w-full max-w-md">
+                <input type="text" id="search" class="w-full p-4 bg-white border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search by Name or Barcode" onkeyup="searchMedicine()">
+            </div>
+            <select id="sort" class="w-48 p-4 bg-white border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="sortMedicines()">
+                <option value="name" id="sort-name">Sort by Name</option>
+                <option value="quantity" id="sort-quantity">Sort by Quantity</option>
+                <option value="price" id="sort-price">Sort by Price</option>
+            </select>
+        </section>
+
+        <!-- Medicines Table -->
+        <section class="overflow-hidden rounded-lg shadow-md bg-white">
+            <table class="w-full table-auto text-sm">
+                <thead class="bg-gray-200">
+                    <tr>
+                        <th class="p-4 text-left font-medium text-gray-800" id="table-name">Name</th>
+                        <th class="p-4 text-left font-medium text-gray-800" id="table-quantity">Quantity</th>
+                        <th class="p-4 text-left font-medium text-gray-800" id="table-price">Price</th>
+                        <th class="p-4 text-left font-medium text-gray-800" id="table-barcode">Barcode</th>
+                        <th class="p-4 text-left font-medium text-gray-800" id="table-expiry">Expiry Date</th>
+                        <th class="p-4 text-center font-medium text-gray-800" id="table-actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="medicine-list" class="bg-white">
+                    <!-- Medicines will be dynamically rendered here -->
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
